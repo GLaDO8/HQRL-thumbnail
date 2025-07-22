@@ -164,6 +164,21 @@ createServer(async (req, res) => {
     }
   }
 
+  if (url.pathname === "/sample_quiz_data.csv") {
+    try {
+      const csvContent = fs.readFileSync(path.join(process.cwd(), "sample_quiz_data.csv"), "utf8");
+      res.writeHead(200, { 
+        "Content-Type": "text/csv",
+        "Content-Disposition": "attachment; filename=sample_quiz_data.csv"
+      });
+      return res.end(csvContent);
+    } catch (err) {
+      console.error(err);
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      return res.end("Sample CSV file not found");
+    }
+  }
+
   res.writeHead(200, { "Content-Type": "text/html" });
   res.end(`
     <!DOCTYPE html>
@@ -217,7 +232,7 @@ createServer(async (req, res) => {
           font-weight: 600;
           color: #555;
         }
-        input[type="text"], select {
+        input[type="text"], select, input[type="file"] {
           width: 100%;
           padding: 12px 16px;
           border: 2px solid #e1e5e9;
@@ -226,9 +241,13 @@ createServer(async (req, res) => {
           transition: border-color 0.2s;
           background: white;
         }
-        input[type="text"]:focus, select:focus {
+        input[type="text"]:focus, select:focus, input[type="file"]:focus {
           outline: none;
           border-color: #007bff;
+        }
+        input[type="file"] {
+          padding: 8px 12px;
+          cursor: pointer;
         }
         .hex-input {
           font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
@@ -405,12 +424,31 @@ createServer(async (req, res) => {
             </div>
           </div>
 
+          <div class="input-group">
+            <label for="csvInput">📊 Batch Generate from CSV:</label>
+            <input 
+              type="file" 
+              id="csvInput" 
+              accept=".csv"
+              style="margin-bottom: 10px;"
+            />
+            <small style="color: #666; display: block; margin-bottom: 10px;">
+              CSV format: quiz_id, title, primary_color, secondary_color, text_color, icon_color, border_color
+            </small>
+            <a href="/sample_quiz_data.csv" download style="color: #007bff; text-decoration: none; font-size: 14px;">
+              📥 Download Sample CSV Template
+            </a>
+          </div>
+
           <div class="button-group">
             <button class="btn-primary" onclick="updateThumbnail()">
               🔄 Update Preview
             </button>
             <button class="btn-secondary" onclick="downloadImage()">
               📥 Download PNG
+            </button>
+            <button class="btn-secondary" id="batchButton" style="background: #17a2b8;">
+              📊 Generate Batch
             </button>
           </div>
         </div>
@@ -468,6 +506,130 @@ createServer(async (req, res) => {
           document.body.removeChild(link);
         }
 
+        function downloadImageWithData(data, filename) {
+          const link = document.createElement('a');
+          link.href = buildImageUrl(data);
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        function parseCsv(text) {
+          const lines = text.trim().split('\\n').filter(line => line.trim());
+          if (lines.length === 0) return [];
+          
+          const headers = lines[0].split(',').map(h => h.trim());
+          const rows = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Simple CSV parsing - split by comma but handle quoted values
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let j = 0; j < line.length; j++) {
+              const char = line[j];
+              if (char === '"') {
+                inQuotes = !inQuotes;
+              } else if (char === ',' && !inQuotes) {
+                values.push(current.trim());
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            values.push(current.trim()); // Add the last value
+            
+            const row = {};
+            headers.forEach((header, index) => {
+              row[header] = values[index] || '';
+            });
+            rows.push(row);
+          }
+          return rows;
+        }
+
+        async function processCsvBatch() {
+          const fileInput = document.getElementById('csvInput');
+          const file = fileInput.files[0];
+          
+          if (!file) {
+            alert('Please select a CSV file first');
+            return;
+          }
+
+          try {
+            const text = await file.text();
+            console.log('CSV text:', text); // Debug log
+            const rows = parseCsv(text);
+            console.log('Parsed rows:', rows); // Debug log
+            
+            if (rows.length === 0) {
+              alert('CSV file appears to be empty or invalid');
+              return;
+            }
+
+            // Validate CSV structure
+            const requiredFields = ['quiz_id', 'title', 'primary_color', 'secondary_color', 'text_color', 'icon_color', 'border_color'];
+            const firstRow = rows[0];
+            const missingFields = requiredFields.filter(field => !(field in firstRow));
+            
+            if (missingFields.length > 0) {
+              alert(\`CSV is missing required columns: \${missingFields.join(', ')}\`);
+              return;
+            }
+
+            // Update button to show progress
+            const button = document.getElementById('batchButton');
+            const originalText = button.textContent;
+            button.disabled = true;
+          
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            button.textContent = \`Processing \${i + 1}/\${rows.length}...\`;
+            
+            const data = {
+              title: row.title,
+              bgType: 'gradient', // Default to gradient, could be made configurable
+              bgColor1: row.primary_color,
+              bgColor2: row.secondary_color,
+              gradientDirection: 'to bottom', // Default direction
+              textColor: row.text_color,
+              verifiedColor: row.icon_color,
+              waygroundColor: row.icon_color, // Same color for both icons
+              borderColor: row.border_color
+            };
+            
+            const filename = \`\${row.quiz_id}.png\`;
+            downloadImageWithData(data, filename);
+            
+            // Small delay between downloads to prevent overwhelming the browser
+            if (i < rows.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+          }
+          
+          button.textContent = originalText;
+          button.disabled = false;
+          alert(\`Successfully generated \${rows.length} thumbnails!\`);
+          
+          } catch (error) {
+            console.error('Error processing CSV:', error);
+            alert('Error processing CSV file: ' + error.message);
+            
+            // Re-enable button if there was an error
+            const button = document.getElementById('batchButton');
+            if (button) {
+              button.disabled = false;
+              button.textContent = '📊 Generate Batch';
+            }
+          }
+        }
+
         function toggleBackgroundControls() {
           const bgType = document.getElementById('bgType').value;
           const bgColor2Group = document.getElementById('bgColor2Group');
@@ -518,6 +680,9 @@ createServer(async (req, res) => {
 
           // Other controls
           document.getElementById('gradientDirection').addEventListener('change', updateThumbnail);
+
+          // CSV batch processing
+          document.getElementById('batchButton').addEventListener('click', processCsvBatch);
 
           // Title input with debounce
           let debounceTimer;

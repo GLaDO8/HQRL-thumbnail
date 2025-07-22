@@ -1,0 +1,6 @@
+quiz_id,title,primary_color,secondary_color,text_color,icon_color,border_color
+quiz_001,"Adding and Subtracting Decimals: Perfect Quiz for 7th Grade",#E6F4FF,#CDE8FE,#184F81,#0079CE,#0079CE
+quiz_002,"Fractions Made Easy: 5th Grade Math Mastery",#FFE6E6,#FFCDCD,#8B0000,#FF4444,#CC3333
+quiz_003,"Geometry Basics: Shapes and Angles for Beginners",#E6FFE6,#CDFFC3,#006400,#00AA00,#008800
+quiz_004,"Multiplication Tables: Speed Challenge",#FFF0E6,#FFE4CD,#CC4400,#FF6600,#DD5500
+quiz_005,"Algebra Introduction: Variables and Equations",#F0E6FF,#E4CDFF,#4B0082,#8A2BE2,#7B2BC2 
