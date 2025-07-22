@@ -42,21 +42,6 @@ function Thumbnail({ title }) {
     >
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          width: 200,
-          height: 200,
-          background:
-            "linear-gradient(to left, rgb(221, 221, 221) 0%, rgba(221, 221, 221, 0) 100%)",
-          transform: "translateY(-100px) rotate(45deg)",
-          transformOrigin: "bottom right",
-          borderBottomLeftRadius: 40,
-          boxShadow: "-3px 3px 5px -2px rgba(0,0,0,0.15)",
-        }}
-      />
-      <div
-        style={{
           zIndex: 1,
           maxWidth: "80%",
           display: "flex",
