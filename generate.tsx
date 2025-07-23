@@ -24,19 +24,20 @@ const waygroundIcon = fs.readFileSync(
 
 function Thumbnail({ title, options = {} }) {
   const {
-    bgType = 'gradient',
-    bgColor1 = '#E6F4FF',
-    bgColor2 = '#CDE8FE',
-    gradientDirection = 'to bottom',
-    textColor = '#184F81',
-    verifiedColor = '#0079CE',
-    waygroundColor = '#0079CE',
-    borderColor = '#0079CE'
+    bgType = "gradient",
+    bgColor1 = "#E6F4FF",
+    bgColor2 = "#CDE8FE",
+    gradientDirection = "to bottom",
+    textColor = "#184F81",
+    verifiedColor = "#0079CE",
+    waygroundColor = "#0079CE",
+    borderColor = "#0079CE",
   } = options;
 
-  const background = bgType === 'solid' 
-    ? bgColor1 
-    : `linear-gradient(${gradientDirection}, ${bgColor1}, ${bgColor2})`;
+  const background =
+    bgType === "solid"
+      ? bgColor1
+      : `linear-gradient(${gradientDirection}, ${bgColor1}, ${bgColor2})`;
 
   // Convert hex border color to rgba with 40% opacity
   const hexToRgba = (hex) => {
@@ -47,15 +48,13 @@ function Thumbnail({ title, options = {} }) {
   };
 
   // Create colored SVGs by replacing fill colors
-  const coloredVerifiedSvg = fs.readFileSync(
-    path.join(process.cwd(), "verified.svg"),
-    "utf8"
-  ).replace(/fill="[^"]*"/g, `fill="${verifiedColor}"`);
+  const coloredVerifiedSvg = fs
+    .readFileSync(path.join(process.cwd(), "verified.svg"), "utf8")
+    .replace(/fill="[^"]*"/g, `fill="${verifiedColor}"`);
 
-  const coloredWaygroundSvg = fs.readFileSync(
-    path.join(process.cwd(), "wayground.svg"),
-    "utf8"
-  ).replace(/fill="[^"]*"/g, `fill="${waygroundColor}"`);
+  const coloredWaygroundSvg = fs
+    .readFileSync(path.join(process.cwd(), "wayground.svg"), "utf8")
+    .replace(/fill="[^"]*"/g, `fill="${waygroundColor}"`);
 
   return (
     <div
@@ -92,18 +91,27 @@ function Thumbnail({ title, options = {} }) {
           }}
         >
           <img
-            src={`data:image/svg+xml;base64,${Buffer.from(coloredVerifiedSvg).toString('base64')}`}
+            src={`data:image/svg+xml;base64,${Buffer.from(
+              coloredVerifiedSvg
+            ).toString("base64")}`}
             width={96}
             height={96}
           />
           <div
             style={{ width: 4, height: 96, background: hexToRgba(borderColor) }}
           />
-          <img
-            src={`data:image/svg+xml;base64,${Buffer.from(coloredWaygroundSvg).toString('base64')}`}
-            width={96}
-            height={96}
-          />
+          <p
+            style={{
+              fontSize: 48,
+              fontWeight: 800,
+              lineHeight: 1.4,
+              color: verifiedColor,
+              paddingLeft: 10,
+              letterSpacing: -0.5,
+            }}
+          >
+            Assessment
+          </p>
         </div>
         <p
           style={{
@@ -137,9 +145,10 @@ async function renderPNG(title, options = {}) {
 
 createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://${req.headers.host}`);
-  const defaultTitle = "Adding and Subtracting Decimals: Perfect Quiz for 7th Grade";
+  const defaultTitle =
+    "Adding and Subtracting Decimals: Perfect Quiz for 7th Grade";
   const title = url.searchParams.get("title") || defaultTitle;
-  
+
   // Parse customization options from URL parameters
   const options = {
     bgType: url.searchParams.get("bgType") || "gradient",
@@ -149,7 +158,7 @@ createServer(async (req, res) => {
     textColor: url.searchParams.get("textColor") || "#184F81",
     verifiedColor: url.searchParams.get("verifiedColor") || "#0079CE",
     waygroundColor: url.searchParams.get("waygroundColor") || "#0079CE",
-    borderColor: url.searchParams.get("borderColor") || "#0079CE"
+    borderColor: url.searchParams.get("borderColor") || "#0079CE",
   };
 
   if (url.pathname === "/image.png") {
@@ -166,10 +175,13 @@ createServer(async (req, res) => {
 
   if (url.pathname === "/sample_quiz_data.csv") {
     try {
-      const csvContent = fs.readFileSync(path.join(process.cwd(), "sample_quiz_data.csv"), "utf8");
-      res.writeHead(200, { 
+      const csvContent = fs.readFileSync(
+        path.join(process.cwd(), "sample_quiz_data.csv"),
+        "utf8"
+      );
+      res.writeHead(200, {
         "Content-Type": "text/csv",
-        "Content-Disposition": "attachment; filename=sample_quiz_data.csv"
+        "Content-Disposition": "attachment; filename=sample_quiz_data.csv",
       });
       return res.end(csvContent);
     } catch (err) {
@@ -319,7 +331,7 @@ createServer(async (req, res) => {
             <input 
               type="text" 
               id="titleInput" 
-              value="${title.replace(/"/g, '&quot;')}" 
+              value="${title.replace(/"/g, "&quot;")}" 
               placeholder="Enter your thumbnail title..."
             />
           </div>
@@ -327,8 +339,12 @@ createServer(async (req, res) => {
           <div class="input-group">
             <label for="bgType">Background Type:</label>
             <select id="bgType">
-              <option value="gradient" ${options.bgType === 'gradient' ? 'selected' : ''}>Gradient</option>
-              <option value="solid" ${options.bgType === 'solid' ? 'selected' : ''}>Solid Color</option>
+              <option value="gradient" ${
+                options.bgType === "gradient" ? "selected" : ""
+              }>Gradient</option>
+              <option value="solid" ${
+                options.bgType === "solid" ? "selected" : ""
+              }>Solid Color</option>
             </select>
           </div>
 
@@ -361,12 +377,24 @@ createServer(async (req, res) => {
             <div class="input-group" id="gradientDirectionGroup">
               <label for="gradientDirection">Direction:</label>
               <select id="gradientDirection">
-                <option value="to bottom" ${options.gradientDirection === 'to bottom' ? 'selected' : ''}>Top → Bottom</option>
-                <option value="to top" ${options.gradientDirection === 'to top' ? 'selected' : ''}>Bottom → Top</option>
-                <option value="to right" ${options.gradientDirection === 'to right' ? 'selected' : ''}>Left → Right</option>
-                <option value="to left" ${options.gradientDirection === 'to left' ? 'selected' : ''}>Right → Left</option>
-                <option value="45deg" ${options.gradientDirection === '45deg' ? 'selected' : ''}>Diagonal ↗</option>
-                <option value="-45deg" ${options.gradientDirection === '-45deg' ? 'selected' : ''}>Diagonal ↘</option>
+                <option value="to bottom" ${
+                  options.gradientDirection === "to bottom" ? "selected" : ""
+                }>Top → Bottom</option>
+                <option value="to top" ${
+                  options.gradientDirection === "to top" ? "selected" : ""
+                }>Bottom → Top</option>
+                <option value="to right" ${
+                  options.gradientDirection === "to right" ? "selected" : ""
+                }>Left → Right</option>
+                <option value="to left" ${
+                  options.gradientDirection === "to left" ? "selected" : ""
+                }>Right → Left</option>
+                <option value="45deg" ${
+                  options.gradientDirection === "45deg" ? "selected" : ""
+                }>Diagonal ↗</option>
+                <option value="-45deg" ${
+                  options.gradientDirection === "-45deg" ? "selected" : ""
+                }>Diagonal ↘</option>
               </select>
             </div>
             <div class="input-group">
@@ -456,7 +484,21 @@ createServer(async (req, res) => {
         <div class="preview">
           <img 
             id="thumbnailPreview" 
-            src="/image.png?title=${encodeURIComponent(title)}&bgType=${options.bgType}&bgColor1=${encodeURIComponent(options.bgColor1)}&bgColor2=${encodeURIComponent(options.bgColor2)}&gradientDirection=${encodeURIComponent(options.gradientDirection)}&textColor=${encodeURIComponent(options.textColor)}&verifiedColor=${encodeURIComponent(options.verifiedColor)}&waygroundColor=${encodeURIComponent(options.waygroundColor)}&borderColor=${encodeURIComponent(options.borderColor)}&t=${Date.now()}" 
+            src="/image.png?title=${encodeURIComponent(title)}&bgType=${
+    options.bgType
+  }&bgColor1=${encodeURIComponent(
+    options.bgColor1
+  )}&bgColor2=${encodeURIComponent(
+    options.bgColor2
+  )}&gradientDirection=${encodeURIComponent(
+    options.gradientDirection
+  )}&textColor=${encodeURIComponent(
+    options.textColor
+  )}&verifiedColor=${encodeURIComponent(
+    options.verifiedColor
+  )}&waygroundColor=${encodeURIComponent(
+    options.waygroundColor
+  )}&borderColor=${encodeURIComponent(options.borderColor)}&t=${Date.now()}" 
             alt="Thumbnail Preview" 
             class="thumbnail-image"
           />
