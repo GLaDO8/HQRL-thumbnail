@@ -22,6 +22,11 @@ const waygroundIcon = fs.readFileSync(
   "base64"
 );
 
+const tempPngPath = path.join(process.cwd(), "temp.png");
+const tempPngData = fs.existsSync(tempPngPath)
+  ? fs.readFileSync(tempPngPath)
+  : null;
+
 function Thumbnail({ title, options = {} }) {
   const {
     bgType = "gradient",
@@ -125,6 +130,18 @@ function Thumbnail({ title, options = {} }) {
           {title}
         </p>
       </div>
+      {tempPngData && (
+        <img
+          src={`data:image/png;base64,${tempPngData.toString("base64")}`}
+          width={400}
+          height={400}
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+          }}
+        />
+      )}
     </div>
   );
 }
