@@ -22,10 +22,7 @@ const waygroundIcon = fs.readFileSync(
   "base64"
 );
 
-const tempPngPath = path.join(process.cwd(), "temp.png");
-const tempPngData = fs.existsSync(tempPngPath)
-  ? fs.readFileSync(tempPngPath)
-  : null;
+// Removed optional bottom-right illustration overlay
 
 function Thumbnail({ title, options = {} }) {
   const {
@@ -130,18 +127,7 @@ function Thumbnail({ title, options = {} }) {
           {title}
         </p>
       </div>
-      {tempPngData && (
-        <img
-          src={`data:image/png;base64,${tempPngData.toString("base64")}`}
-          width={400}
-          height={400}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            right: 0,
-          }}
-        />
-      )}
+      {/* Illustration overlay removed */}
     </div>
   );
 }
@@ -215,317 +201,167 @@ createServer(async (req, res) => {
     <head>
       <meta charset="UTF-8">
       <title>Thumbnail Generator</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-q5Gk7yO5kJcQ9w8wH3v8+XzB7M9vHbqZqGv8iWmWc3m3z8f+2wVfQW4t6fM3JmQj1Q5g9jv8u4CqQW3m0o4w0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 20px;
-          background: #f5f5f5;
-        }
-        .container {
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        h1 {
-          color: #333;
-          margin-bottom: 30px;
-          text-align: center;
-        }
-        .controls {
-          margin-bottom: 30px;
-          background: #f8f9fa;
-          padding: 30px;
-          border-radius: 12px;
-          border: 1px solid #e9ecef;
-        }
-        .input-group {
-          margin-bottom: 20px;
-        }
-        .color-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-        .gradient-controls {
-          display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 20px;
-          align-items: end;
-        }
-        label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 600;
-          color: #555;
-        }
-        input[type="text"], select, input[type="file"] {
-          width: 100%;
-          padding: 12px 16px;
-          border: 2px solid #e1e5e9;
-          border-radius: 8px;
-          font-size: 16px;
-          transition: border-color 0.2s;
-          background: white;
-        }
-        input[type="text"]:focus, select:focus, input[type="file"]:focus {
-          outline: none;
-          border-color: #007bff;
-        }
-        input[type="file"] {
-          padding: 8px 12px;
-          cursor: pointer;
-        }
-        .hex-input {
-          font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-          text-transform: uppercase;
-        }
-        .button-group {
-          display: flex;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-        @media (max-width: 768px) {
-          .color-row, .gradient-controls {
-            grid-template-columns: 1fr;
-          }
-          .button-group {
-            flex-direction: column;
-          }
-        }
-        button {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-primary {
-          background: #007bff;
-          color: white;
-        }
-        .btn-primary:hover {
-          background: #0056b3;
-        }
-        .btn-secondary {
-          background: #28a745;
-          color: white;
-        }
-        .btn-secondary:hover {
-          background: #1e7e34;
-        }
-        .preview {
-          text-align: center;
-          border: 2px dashed #ddd;
-          border-radius: 12px;
-          padding: 20px;
-          background: #fafafa;
-        }
-        .thumbnail-image {
-          max-width: 100%;
-          height: auto;
-          border-radius: 8px;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .image-info {
-          margin-top: 15px;
-          color: #666;
-          font-size: 14px;
-        }
+        .hex-input { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; text-transform: uppercase; }
       </style>
     </head>
     <body>
-      <div class="container">
-        <h1>🎨 Thumbnail Generator</h1>
-        
-        <div class="controls">
-          <div class="input-group">
-            <label for="titleInput">Thumbnail Title:</label>
-            <input 
-              type="text" 
-              id="titleInput" 
-              value="${title.replace(/"/g, "&quot;")}" 
-              placeholder="Enter your thumbnail title..."
-            />
+      <div class="min-h-screen bg-slate-50">
+        <div class="max-w-6xl mx-auto px-6 py-8">
+          <div class="mb-6 flex items-center justify-between">
+            <h1 class="text-2xl font-semibold tracking-tight">Thumbnail Generator</h1>
+            <div class="text-sm text-slate-500">Size: 1200×630</div>
           </div>
 
-          <div class="input-group">
-            <label for="bgType">Background Type:</label>
-            <select id="bgType">
-              <option value="gradient" ${
-                options.bgType === "gradient" ? "selected" : ""
-              }>Gradient</option>
-              <option value="solid" ${
-                options.bgType === "solid" ? "selected" : ""
-              }>Solid Color</option>
-            </select>
-          </div>
+          <div class="grid lg:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Thumbnail Title</label>
+                <input id="titleInput" type="text" value="${title.replace(/"/g, "&quot;")}" placeholder="Enter your thumbnail title..." class="w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+              </div>
 
-          <div class="color-row">
-            <div class="input-group">
-              <label for="bgColor1">Primary Color:</label>
-              <input 
-                type="text" 
-                id="bgColor1" 
-                value="${options.bgColor1}" 
-                placeholder="#E6F4FF"
-                class="hex-input"
-                maxlength="7"
-              />
-            </div>
-            <div class="input-group" id="bgColor2Group">
-              <label for="bgColor2">Secondary Color:</label>
-              <input 
-                type="text" 
-                id="bgColor2" 
-                value="${options.bgColor2}" 
-                placeholder="#CDE8FE"
-                class="hex-input"
-                maxlength="7"
-              />
-            </div>
-          </div>
+              <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                <div class="mb-3 text-sm font-medium text-slate-700">Quick Presets</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button class="h-10 rounded-md text-white font-medium" style="background:#F0AF0A" onclick="applyPreset('yellow')">Yellow</button>
+                  <button class="h-10 rounded-md text-white font-medium" style="background:#D16D10" onclick="applyPreset('orange')">Orange</button>
+                  <button class="h-10 rounded-md text-white font-medium" style="background:#005DB1" onclick="applyPreset('blue')">Blue</button>
+                  <button class="h-10 rounded-md text-white font-medium" style="background:#E0067B" onclick="applyPreset('magenta')">Magenta</button>
+                </div>
+              </div>
 
-          <div class="gradient-controls">
-            <div class="input-group" id="gradientDirectionGroup">
-              <label for="gradientDirection">Direction:</label>
-              <select id="gradientDirection">
-                <option value="to bottom" ${
-                  options.gradientDirection === "to bottom" ? "selected" : ""
-                }>Top → Bottom</option>
-                <option value="to top" ${
-                  options.gradientDirection === "to top" ? "selected" : ""
-                }>Bottom → Top</option>
-                <option value="to right" ${
-                  options.gradientDirection === "to right" ? "selected" : ""
-                }>Left → Right</option>
-                <option value="to left" ${
-                  options.gradientDirection === "to left" ? "selected" : ""
-                }>Right → Left</option>
-                <option value="45deg" ${
-                  options.gradientDirection === "45deg" ? "selected" : ""
-                }>Diagonal ↗</option>
-                <option value="-45deg" ${
-                  options.gradientDirection === "-45deg" ? "selected" : ""
-                }>Diagonal ↘</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label for="textColor">Text Color:</label>
-              <input 
-                type="text" 
-                id="textColor" 
-                value="${options.textColor}" 
-                placeholder="#184F81"
-                class="hex-input"
-                maxlength="7"
-              />
-            </div>
-          </div>
+              <details class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm" id="advancedPanel">
+                <summary class="cursor-pointer select-none list-none">
+                  <div class="flex items-center justify-between">
+                    <div class="text-sm font-medium text-slate-700">Advanced settings</div>
+                    <span class="text-xs text-slate-500">Customize colors</span>
+                  </div>
+                </summary>
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1" for="bgType">Background Type</label>
+                    <select id="bgType" class="w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                      <option value="gradient" ${options.bgType === "gradient" ? "selected" : ""}>Gradient</option>
+                      <option value="solid" ${options.bgType === "solid" ? "selected" : ""}>Solid Color</option>
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="bgColor1">Primary Color</label>
+                      <input id="bgColor1" type="text" value="${options.bgColor1}" placeholder="#FFFFFF" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                    <div id="bgColor2Group">
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="bgColor2">Secondary Color</label>
+                      <input id="bgColor2" type="text" value="${options.bgColor2}" placeholder="#E6F4FF" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div id="gradientDirectionGroup">
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="gradientDirection">Gradient Direction</label>
+                      <select id="gradientDirection" class="w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+                        <option value="to bottom" ${options.gradientDirection === "to bottom" ? "selected" : ""}>Top → Bottom</option>
+                        <option value="to top" ${options.gradientDirection === "to top" ? "selected" : ""}>Bottom → Top</option>
+                        <option value="to right" ${options.gradientDirection === "to right" ? "selected" : ""}>Left → Right</option>
+                        <option value="to left" ${options.gradientDirection === "to left" ? "selected" : ""}>Right → Left</option>
+                        <option value="45deg" ${options.gradientDirection === "45deg" ? "selected" : ""}>Diagonal ↗</option>
+                        <option value="-45deg" ${options.gradientDirection === "-45deg" ? "selected" : ""}>Diagonal ↘</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="textColor">Title Text Color</label>
+                      <input id="textColor" type="text" value="${options.textColor}" placeholder="#184F81" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="verifiedColor">Verified Icon</label>
+                      <input id="verifiedColor" type="text" value="${options.verifiedColor}" placeholder="#0079CE" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="waygroundColor">Wayground Icon</label>
+                      <input id="waygroundColor" type="text" value="${options.waygroundColor}" placeholder="#0079CE" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1" for="borderColor">Border Color (40% opacity)</label>
+                      <input id="borderColor" type="text" value="${options.borderColor}" placeholder="#0079CE" maxlength="7" class="hex-input w-full h-11 rounded-md border border-slate-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400" />
+                    </div>
+                    <div class="text-xs text-slate-500">Border opacity is fixed</div>
+                  </div>
+                </div>
+              </details>
 
-          <div class="color-row">
-            <div class="input-group">
-              <label for="verifiedColor">Verified Icon:</label>
-              <input 
-                type="text" 
-                id="verifiedColor" 
-                value="${options.verifiedColor}" 
-                placeholder="#0079CE"
-                class="hex-input"
-                maxlength="7"
-              />
+              <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <label class="block text-sm font-medium text-slate-700">Batch generate from CSV</label>
+                <input type="file" id="csvInput" accept=".csv" class="block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-slate-100 hover:file:bg-slate-200" />
+                <div class="text-xs text-slate-500">CSV columns: <code>quiz_id,title,preset</code></div>
+                <a href="/sample_quiz_data.csv" download class="text-sm text-sky-700 hover:underline">Download sample CSV</a>
+                <div class="flex gap-2 pt-2">
+                  <button class="h-10 px-4 rounded-md bg-slate-900 text-white text-sm font-medium" onclick="updateThumbnail()">Update Preview</button>
+                  <button class="h-10 px-4 rounded-md bg-slate-700 text-white text-sm font-medium" onclick="downloadImage()">Download PNG</button>
+                  <button id="batchButton" class="h-10 px-4 rounded-md bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium">Generate Zip</button>
+                </div>
+                <div id="batchStatus" class="text-xs text-slate-500"></div>
+              </div>
             </div>
-            <div class="input-group">
-              <label for="waygroundColor">Wayground Icon:</label>
-              <input 
-                type="text" 
-                id="waygroundColor" 
-                value="${options.waygroundColor}" 
-                placeholder="#0079CE"
-                class="hex-input"
-                maxlength="7"
-              />
+
+            <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+              <div class="preview">
+                <img id="thumbnailPreview" src="/image.png?title=${encodeURIComponent(title)}&bgType=${options.bgType}&bgColor1=${encodeURIComponent(options.bgColor1)}&bgColor2=${encodeURIComponent(options.bgColor2)}&gradientDirection=${encodeURIComponent(options.gradientDirection)}&textColor=${encodeURIComponent(options.textColor)}&verifiedColor=${encodeURIComponent(options.verifiedColor)}&waygroundColor=${encodeURIComponent(options.waygroundColor)}&borderColor=${encodeURIComponent(options.borderColor)}&t=${Date.now()}" alt="Thumbnail Preview" class="w-full h-auto rounded-md border" />
+                <div class="image-info text-sm text-slate-500 mt-2">Preview updates as you change settings</div>
+              </div>
             </div>
-          </div>
-
-          <div class="color-row">
-            <div class="input-group">
-              <label for="borderColor">Border Color:</label>
-              <input 
-                type="text" 
-                id="borderColor" 
-                value="${options.borderColor}" 
-                placeholder="#0079CE"
-                class="hex-input"
-                maxlength="7"
-              />
-            </div>
-            <div class="input-group">
-              <label style="color: #666; font-size: 14px;">Border opacity is fixed at 40%</label>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="csvInput">📊 Batch Generate from CSV:</label>
-            <input 
-              type="file" 
-              id="csvInput" 
-              accept=".csv"
-              style="margin-bottom: 10px;"
-            />
-            <small style="color: #666; display: block; margin-bottom: 10px;">
-              CSV format: quiz_id, title, primary_color, secondary_color, text_color, icon_color, border_color
-            </small>
-            <a href="/sample_quiz_data.csv" download style="color: #007bff; text-decoration: none; font-size: 14px;">
-              📥 Download Sample CSV Template
-            </a>
-          </div>
-
-          <div class="button-group">
-            <button class="btn-primary" onclick="updateThumbnail()">
-              🔄 Update Preview
-            </button>
-            <button class="btn-secondary" onclick="downloadImage()">
-              📥 Download PNG
-            </button>
-            <button class="btn-secondary" id="batchButton" style="background: #17a2b8;">
-              📊 Generate Batch
-            </button>
-          </div>
-        </div>
-
-        <div class="preview">
-          <img 
-            id="thumbnailPreview" 
-            src="/image.png?title=${encodeURIComponent(title)}&bgType=${
-    options.bgType
-  }&bgColor1=${encodeURIComponent(
-    options.bgColor1
-  )}&bgColor2=${encodeURIComponent(
-    options.bgColor2
-  )}&gradientDirection=${encodeURIComponent(
-    options.gradientDirection
-  )}&textColor=${encodeURIComponent(
-    options.textColor
-  )}&verifiedColor=${encodeURIComponent(
-    options.verifiedColor
-  )}&waygroundColor=${encodeURIComponent(
-    options.waygroundColor
-  )}&borderColor=${encodeURIComponent(options.borderColor)}&t=${Date.now()}" 
-            alt="Thumbnail Preview" 
-            class="thumbnail-image"
-          />
-          <div class="image-info">
-            Size: 1200×630px | Format: PNG | Ready for social media
           </div>
         </div>
       </div>
 
       <script>
+        const PRESETS = {
+          yellow: {
+            bgType: 'gradient',
+            bgColor1: '#FFFFFF',
+            bgColor2: '#FFF9E5',
+            gradientDirection: 'to bottom',
+            textColor: '#B07101',
+            verifiedColor: '#F0AF0A',
+            waygroundColor: '#F0AF0A',
+            borderColor: '#FECA43',
+          },
+          orange: {
+            bgType: 'gradient',
+            bgColor1: '#FFFFFF',
+            bgColor2: '#FEF4EC',
+            gradientDirection: 'to bottom',
+            textColor: '#A65421',
+            verifiedColor: '#D16D10',
+            waygroundColor: '#D16D10',
+            borderColor: '#E57C1A',
+          },
+          blue: {
+            bgType: 'gradient',
+            bgColor1: '#FFFFFF',
+            bgColor2: '#E6F4FF',
+            gradientDirection: 'to bottom',
+            textColor: '#184F81',
+            verifiedColor: '#005DB1',
+            waygroundColor: '#005DB1',
+            borderColor: '#0079CE',
+          },
+          magenta: {
+            bgType: 'gradient',
+            bgColor1: '#FFFFFF',
+            bgColor2: '#FFEBEB',
+            gradientDirection: 'to bottom',
+            textColor: '#B60261',
+            verifiedColor: '#E0067B',
+            waygroundColor: '#E0067B',
+            borderColor: '#FF319F',
+          },
+        };
+
         function getFormData() {
           return {
             title: document.getElementById('titleInput').value,
@@ -538,6 +374,27 @@ createServer(async (req, res) => {
             waygroundColor: document.getElementById('waygroundColor').value,
             borderColor: document.getElementById('borderColor').value
           };
+        }
+
+        function setFormData(data) {
+          if (!data) return;
+          const set = (id, value) => { if (value !== undefined) document.getElementById(id).value = value; };
+          set('bgType', data.bgType);
+          set('bgColor1', data.bgColor1);
+          set('bgColor2', data.bgColor2);
+          set('gradientDirection', data.gradientDirection);
+          set('textColor', data.textColor);
+          set('verifiedColor', data.verifiedColor);
+          set('waygroundColor', data.waygroundColor);
+          set('borderColor', data.borderColor);
+        }
+
+        function applyPreset(name) {
+          const preset = PRESETS[name];
+          if (!preset) return;
+          setFormData(preset);
+          toggleBackgroundControls();
+          updateThumbnail();
         }
 
         function buildImageUrl(data) {
@@ -632,8 +489,8 @@ createServer(async (req, res) => {
               return;
             }
 
-            // Validate CSV structure
-            const requiredFields = ['quiz_id', 'title', 'primary_color', 'secondary_color', 'text_color', 'icon_color', 'border_color'];
+            // Validate CSV structure (new simplified format)
+            const requiredFields = ['quiz_id', 'title', 'preset'];
             const firstRow = rows[0];
             const missingFields = requiredFields.filter(field => !(field in firstRow));
             
@@ -642,39 +499,47 @@ createServer(async (req, res) => {
               return;
             }
 
-            // Update button to show progress
             const button = document.getElementById('batchButton');
+            const status = document.getElementById('batchStatus');
             const originalText = button.textContent;
             button.disabled = true;
-          
-          for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            button.textContent = \`Processing \${i + 1}/\${rows.length}...\`;
-            
-            const data = {
-              title: row.title,
-              bgType: 'gradient', // Default to gradient, could be made configurable
-              bgColor1: row.primary_color,
-              bgColor2: row.secondary_color,
-              gradientDirection: 'to bottom', // Default direction
-              textColor: row.text_color,
-              verifiedColor: row.icon_color,
-              waygroundColor: row.icon_color, // Same color for both icons
-              borderColor: row.border_color
-            };
-            
-            const filename = \`\${row.quiz_id}.png\`;
-            downloadImageWithData(data, filename);
-            
-            // Small delay between downloads to prevent overwhelming the browser
-            if (i < rows.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 500));
+            status.textContent = 'Preparing zip...';
+
+            const zip = new JSZip();
+
+            for (let i = 0; i < rows.length; i++) {
+              const row = rows[i];
+              button.textContent = \`Processing \${i + 1}/\${rows.length}...\`;
+              status.textContent = button.textContent;
+
+              const presetKey = String(row.preset || '').trim().toLowerCase();
+              const preset = PRESETS[presetKey];
+              if (!preset) {
+                console.warn('Unknown preset for row', row);
+                continue;
+              }
+
+              const data = { title: row.title, ...preset };
+              const url = buildImageUrl(data);
+              const resp = await fetch(url);
+              const blob = await resp.blob();
+              const filename = \`${'${'}row.quiz_id${'}'}.png\`;
+              zip.file(filename, blob);
             }
-          }
-          
-          button.textContent = originalText;
-          button.disabled = false;
-          alert(\`Successfully generated \${rows.length} thumbnails!\`);
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const zipUrl = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            a.href = zipUrl;
+            a.download = 'thumbnails.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(zipUrl);
+
+            button.textContent = originalText;
+            button.disabled = false;
+            status.textContent = \`Generated \${rows.length} images and downloaded as ZIP.\`;
           
           } catch (error) {
             console.error('Error processing CSV:', error);
@@ -684,7 +549,7 @@ createServer(async (req, res) => {
             const button = document.getElementById('batchButton');
             if (button) {
               button.disabled = false;
-              button.textContent = '📊 Generate Batch';
+              button.textContent = 'Generate Zip';
             }
           }
         }
